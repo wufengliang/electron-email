@@ -1,0 +1,16 @@
+html,
+body {
+  background-color: #eadcdc;
+}
+
+.padding-20 {
+  padding: 20px;
+}
+
+.margin-left-10 {
+  margin-left: 10px;
+}
+
+.margin-top-10 {
+  margin-top: 10px;
+}
