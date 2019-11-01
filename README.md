@@ -1,10 +1,10 @@
-# electron-email
+# electron email —— 关于 electron 邮件群发器
 
 > electron email
 
 #### Build Setup
 
-``` bash
+```bash
 # install dependencies
 npm install
 
