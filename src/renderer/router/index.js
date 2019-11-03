@@ -11,6 +11,11 @@ export default new Router({
       component: require('@/components/sendEmail').default,
     },
     {
+      path: '/look-email',
+      name: 'look-email',
+      component: require('@/components/lookEmail').default,
+    },
+    {
       path: '*',
       redirect: '/',
     },

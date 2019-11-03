@@ -23,6 +23,7 @@ function createWindow() {
     useContentSize: false,
     resizable: false,
     autoHideMenuBar: true,
+    maximizable: false,
   });
 
   mainWindow.loadURL(winURL);
