@@ -7,17 +7,17 @@ const mutations = {
     state.accountData = data;
   },
   DELETE_ACCOUNT_DATA: (state, single) => {
-    const index = state.accountData.findIndex(single);
+    const index = state.accountData.findIndex(item => item.account === single);
     state.accountData.splice(index, 1);
   },
 };
 
 const actions = {
-  addAccountData({ commit }) {
-    commit('ADD_ACCOUNT_DATA');
+  addAccountData({ commit }, data) {
+    commit('ADD_ACCOUNT_DATA', data);
   },
-  deleteAccountData({ commit }) {
-    commit('DELETE_ACCOUNT_DATA');
+  deleteAccountData({ commit }, data) {
+    commit('DELETE_ACCOUNT_DATA', data);
   },
 };
 

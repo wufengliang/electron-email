@@ -35,10 +35,21 @@
         :disabled="data.length === 0"
         @click="startSend"
       >开始发送</Button>
-      <Button type="primary" size="small" :disabled="data.length === 0" class="margin-left-10">停止发送</Button>
+      <Button
+        type="primary"
+        size="small"
+        :disabled="data.length === 0"
+        class="margin-left-10"
+      >停止发送</Button>
     </div>
     <div class="table-box margin-top-10">
-      <Table border :loading="loading" :columns="columns" :data="data" ref="selection"></Table>
+      <Table
+        border
+        :loading="loading"
+        :columns="columns"
+        :data="data"
+        ref="selection"
+      ></Table>
     </div>
     <div class="status">
       <div class="status-item">
@@ -98,9 +109,7 @@ export default {
               const data = item.split("-");
               return { account: data[0], password: data[1] };
             });
-          console.log(array);
           this.$store.dispatch("addAccountData", array);
-          console.log(this.accountData);
         }
       };
       this.openFile(params);
@@ -113,17 +122,18 @@ export default {
           ? "http://localhost:9080/#/look-email"
           : `file://${__dirname}/index.html#/look-email`;
       const winHandle = new window({
-        width: 400,
-        height: 200,
+        width: 500,
+        height: 300,
         useContentSize: false,
         resizable: false,
         autoHideMenuBar: true,
-        maximizable: false
+        maximizable: false,
+        parent: this.$electron.remote.mainWindow
       });
       winHandle.loadURL(winURL);
     },
     //  导入接收邮箱
-    openDialog() {
+    openDialog() {      console.log(this.accountData);
       this.$electron.remote.dialog.showOpenDialog(
         {
           title: "导入接收邮箱账号",
@@ -191,14 +201,14 @@ export default {
     //  开始发送
     startSend() {
       const selection = this.$refs.selection
-          .getSelection()
-          .map(item => item.account),
+        .getSelection()
+        .map(item => item.account),
         params = {
           type: "info",
           title: "提示",
           message: `是否对当前${
             selection.length > 0 ? `${selection.length}项选中` : "全部"
-          }数据进行操作？`,
+            }数据进行操作？`,
           callback: () => {
             const emails =
               selection.length > 0
@@ -229,11 +239,16 @@ export default {
       this.showMesssage(params);
     },
     //  停止发送
-    stopSend() {}
+    stopSend() { }
   },
   computed: {
     accountData() {
       return this.$store.state.account.accountData;
+    }
+  },
+  watch: {
+    accountData(newV, old) {
+      console.log(newV, old);
     }
   }
 };
