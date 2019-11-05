@@ -1,7 +1,11 @@
 <template>
   <main>
     <div class="padding-20">
-      <Table border :columns="columns" :data="accountData"></Table>
+      <Table
+        border
+        :columns="columns"
+        :data="accountData"
+      ></Table>
     </div>
   </main>
 </template>
@@ -12,6 +16,7 @@ export default {
   name: "look-email",
   data() {
     return {
+      accountData: [],
       columns: [
         {
           type: "selection",
@@ -41,6 +46,11 @@ export default {
                 on: {
                   click: () => {
                     const account = params.row.account;
+                    const index = this.accountData.findIndex(item => item.account === account);
+                    this.accountData.splice(index, 1);
+                    const array = this.accountData;
+                    console.log(array);
+                    setData('accountData', array);
                   }
                 }
               },
@@ -53,16 +63,8 @@ export default {
     };
   },
   created() {
-    this.$electron.remote.ipcRenderer.on("accountData", (event, args) => {
-      console.log(args, 11);
-    });
+    this.accountData = getData('accountData') || [];
   },
-  methods: {},
-  computed: {
-    accountData() {
-      return getData("accountData");
-    }
-  }
 };
 </script>
 

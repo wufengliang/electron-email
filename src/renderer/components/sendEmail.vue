@@ -35,10 +35,21 @@
         :disabled="data.length === 0"
         @click="startSend"
       >开始发送</Button>
-      <Button type="primary" size="small" :disabled="data.length === 0" class="margin-left-10">停止发送</Button>
+      <Button
+        type="primary"
+        size="small"
+        :disabled="data.length === 0"
+        class="margin-left-10"
+      >停止发送</Button>
     </div>
     <div class="table-box margin-top-10">
-      <Table border :loading="loading" :columns="columns" :data="data" ref="selection"></Table>
+      <Table
+        border
+        :loading="loading"
+        :columns="columns"
+        :data="data"
+        ref="selection"
+      ></Table>
     </div>
     <div class="status">
       <div class="status-item">
@@ -88,6 +99,9 @@ export default {
       filePath: null // 导入发送的文件
     };
   },
+  created() {
+    this.accountData = getData('accountData') || [];
+  },
   methods: {
     //  导入发送账号
     loadEmail() {
@@ -101,6 +115,7 @@ export default {
               return { account: data[0], password: data[1] };
             });
           this.accountData = array;
+          setData('accountData', array);
         }
       };
       this.openFile(params);
@@ -119,6 +134,9 @@ export default {
         });
       winHandle.webContents.send("accountData", this.accountData);
       winHandle.loadURL(winURL);
+      winHandle.on('closed', () => {
+        this.accountData = getData('accountData') || [];
+      })
     },
     //  导入接收邮箱
     openDialog() {
@@ -189,14 +207,14 @@ export default {
     //  开始发送
     startSend() {
       const selection = this.$refs.selection
-          .getSelection()
-          .map(item => item.account),
+        .getSelection()
+        .map(item => item.account),
         params = {
           type: "info",
           title: "提示",
           message: `是否对当前${
             selection.length > 0 ? `${selection.length}项选中` : "全部"
-          }数据进行操作？`,
+            }数据进行操作？`,
           callback: () => {
             const emails =
               selection.length > 0
@@ -227,7 +245,7 @@ export default {
       this.showMesssage(params);
     },
     //  停止发送
-    stopSend() {}
+    stopSend() { }
   }
 };
 </script>
