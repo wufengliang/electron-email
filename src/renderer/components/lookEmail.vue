@@ -1,16 +1,13 @@
 <template>
   <main>
     <div class="padding-20">
-      <Table
-        border
-        :columns="columns"
-        :data="accountData"
-      ></Table>
+      <Table border :columns="columns" :data="accountData"></Table>
     </div>
   </main>
 </template>
 
 <script>
+import { getData, setData } from "../utils/set-get.data";
 export default {
   name: "look-email",
   data() {
@@ -24,7 +21,7 @@ export default {
         {
           title: "账号",
           key: "account",
-          width: 150,
+          width: 150
         },
         {
           title: "密码",
@@ -43,9 +40,7 @@ export default {
                 },
                 on: {
                   click: () => {
-                    const data = params.row.account;
-                    this.$store.dispatch('deleteAccountData', data);
-                    console.log(this.accountData);
+                    const account = params.row.account;
                   }
                 }
               },
@@ -57,10 +52,15 @@ export default {
       data: []
     };
   },
+  created() {
+    this.$electron.remote.ipcRenderer.on("accountData", (event, args) => {
+      console.log(args, 11);
+    });
+  },
   methods: {},
   computed: {
     accountData() {
-      return this.$store.state.account.accountData;
+      return getData("accountData");
     }
   }
 };

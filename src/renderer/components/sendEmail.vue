@@ -35,21 +35,10 @@
         :disabled="data.length === 0"
         @click="startSend"
       >开始发送</Button>
-      <Button
-        type="primary"
-        size="small"
-        :disabled="data.length === 0"
-        class="margin-left-10"
-      >停止发送</Button>
+      <Button type="primary" size="small" :disabled="data.length === 0" class="margin-left-10">停止发送</Button>
     </div>
     <div class="table-box margin-top-10">
-      <Table
-        border
-        :loading="loading"
-        :columns="columns"
-        :data="data"
-        ref="selection"
-      ></Table>
+      <Table border :loading="loading" :columns="columns" :data="data" ref="selection"></Table>
     </div>
     <div class="status">
       <div class="status-item">
@@ -73,11 +62,13 @@ import fs from "fs";
 import nodemailer from "nodemailer";
 import sendEmail from "../utils/send-emal";
 import config from "../config";
+import { getData, setData } from "../utils/set-get.data";
 export default {
   name: "send-email",
   data() {
     return {
       loading: false,
+      accountData: [],
       columns: [
         {
           type: "selection",
@@ -109,31 +100,28 @@ export default {
               const data = item.split("-");
               return { account: data[0], password: data[1] };
             });
-          this.$store.dispatch("addAccountData", array);
+          this.accountData = array;
         }
       };
       this.openFile(params);
     },
     //  查看发送账号
     lookEmail() {
-      const window = this.$electron.remote.BrowserWindow;
-      const winURL =
-        process.env.NODE_ENV === "development"
-          ? "http://localhost:9080/#/look-email"
-          : `file://${__dirname}/index.html#/look-email`;
-      const winHandle = new window({
-        width: 500,
-        height: 300,
-        useContentSize: false,
-        resizable: false,
-        autoHideMenuBar: true,
-        maximizable: false,
-        parent: this.$electron.remote.mainWindow
-      });
+      const window = this.$electron.remote.BrowserWindow,
+        winURL = `${location.origin}/#/look-email`,
+        winHandle = new window({
+          width: 500,
+          height: 300,
+          useContentSize: false,
+          resizable: false,
+          autoHideMenuBar: true,
+          maximizable: false
+        });
+      winHandle.webContents.send("accountData", this.accountData);
       winHandle.loadURL(winURL);
     },
     //  导入接收邮箱
-    openDialog() {      console.log(this.accountData);
+    openDialog() {
       this.$electron.remote.dialog.showOpenDialog(
         {
           title: "导入接收邮箱账号",
@@ -201,14 +189,14 @@ export default {
     //  开始发送
     startSend() {
       const selection = this.$refs.selection
-        .getSelection()
-        .map(item => item.account),
+          .getSelection()
+          .map(item => item.account),
         params = {
           type: "info",
           title: "提示",
           message: `是否对当前${
             selection.length > 0 ? `${selection.length}项选中` : "全部"
-            }数据进行操作？`,
+          }数据进行操作？`,
           callback: () => {
             const emails =
               selection.length > 0
@@ -239,17 +227,7 @@ export default {
       this.showMesssage(params);
     },
     //  停止发送
-    stopSend() { }
-  },
-  computed: {
-    accountData() {
-      return this.$store.state.account.accountData;
-    }
-  },
-  watch: {
-    accountData(newV, old) {
-      console.log(newV, old);
-    }
+    stopSend() {}
   }
 };
 </script>
