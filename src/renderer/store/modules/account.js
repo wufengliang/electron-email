@@ -1,5 +1,6 @@
 const state = {
   accountData: [],
+  filePath: null,
 };
 
 const mutations = {
@@ -10,6 +11,9 @@ const mutations = {
     const index = state.accountData.findIndex(item => item.account === single);
     state.accountData.splice(index, 1);
   },
+  ADD_FILE_PATH: (state, filePath) => {
+    state.filePath = filePath;
+  },
 };
 
 const actions = {
@@ -18,6 +22,9 @@ const actions = {
   },
   deleteAccountData({ commit }, data) {
     commit('DELETE_ACCOUNT_DATA', data);
+  },
+  addFilePath({ commit }, data) {
+    commit('ADD_FILE_PATH', data);
   },
 };
 

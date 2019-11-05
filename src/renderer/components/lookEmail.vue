@@ -49,7 +49,6 @@ export default {
                     const index = this.accountData.findIndex(item => item.account === account);
                     this.accountData.splice(index, 1);
                     const array = this.accountData;
-                    console.log(array);
                     setData('accountData', array);
                   }
                 }

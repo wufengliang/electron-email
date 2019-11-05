@@ -35,21 +35,18 @@
         :disabled="data.length === 0"
         @click="startSend"
       >开始发送</Button>
-      <Button
-        type="primary"
-        size="small"
-        :disabled="data.length === 0"
-        class="margin-left-10"
-      >停止发送</Button>
+      <Button type="primary" size="small" :disabled="data.length === 0" class="margin-left-10">停止发送</Button>
+      <Poptip
+        trigger="hover"
+        title="导入文件地址"
+        placement="left-end"
+        :content="filePath ? filePath : '暂无导入文件'"
+      >
+        <Button type="primary" size="small" class="margin-left-10" @click="loadFile">导入文件</Button>
+      </Poptip>
     </div>
     <div class="table-box margin-top-10">
-      <Table
-        border
-        :loading="loading"
-        :columns="columns"
-        :data="data"
-        ref="selection"
-      ></Table>
+      <Table border :loading="loading" :columns="columns" :data="data"></Table>
     </div>
     <div class="status">
       <div class="status-item">
@@ -78,14 +75,9 @@ export default {
   name: "send-email",
   data() {
     return {
-      loading: false,
-      accountData: [],
+      loading: false, //  表格loading效果图
+      accountData: [], //  table表格数据源
       columns: [
-        {
-          type: "selection",
-          width: 50,
-          align: "center"
-        },
         {
           title: "账号",
           key: "account"
@@ -95,12 +87,13 @@ export default {
           key: "status"
         }
       ],
-      data: [],
-      filePath: null // 导入发送的文件
+      data: [], //  接收账号数据
+      fileData: null, // 导入发送的文件
+      isStartSend: false
     };
   },
   created() {
-    this.accountData = getData('accountData') || [];
+    this.accountData = getData("accountData") || [];
   },
   methods: {
     //  导入发送账号
@@ -115,7 +108,7 @@ export default {
               return { account: data[0], password: data[1] };
             });
           this.accountData = array;
-          setData('accountData', array);
+          setData("accountData", array);
         }
       };
       this.openFile(params);
@@ -134,9 +127,9 @@ export default {
         });
       winHandle.webContents.send("accountData", this.accountData);
       winHandle.loadURL(winURL);
-      winHandle.on('closed', () => {
-        this.accountData = getData('accountData') || [];
-      })
+      winHandle.on("closed", () => {
+        this.accountData = getData("accountData") || [];
+      });
     },
     //  导入接收邮箱
     openDialog() {
@@ -172,6 +165,7 @@ export default {
       };
       this.showMesssage(params);
     },
+    //  公共提示框
     showMesssage({ type = "info", title = "提示", message, callback }) {
       const params = {
         type,
@@ -185,10 +179,12 @@ export default {
         index === 0 && callback && callback();
       });
     },
+    //  公共打开文件提示框
     openFile({
       title = "提示",
       properties = ["openFile", "showHiddenFiles"],
       filters = [{ name: "文本类型", extensions: ["txt"] }],
+      type = "txt",
       callback
     }) {
       const dialog = this.$electron.remote.dialog;
@@ -199,53 +195,74 @@ export default {
               throw err;
             }
             // eslint-disable-next-line no-unused-expressions
-            callback && callback(data.split(/\n/));
+            callback &&
+              (type === "txt"
+                ? callback(data.split(/\n/), filePaths[0])
+                : callback(data, filePaths[0]));
           });
         }
       });
     },
     //  开始发送
     startSend() {
-      const selection = this.$refs.selection
-        .getSelection()
-        .map(item => item.account),
-        params = {
-          type: "info",
-          title: "提示",
-          message: `是否对当前${
-            selection.length > 0 ? `${selection.length}项选中` : "全部"
-            }数据进行操作？`,
-          callback: () => {
-            const emails =
-              selection.length > 0
-                ? selection.join(",")
-                : this.data.map(item => item.account).join(",");
-            const options = {
-              account: "44823912@qq.com",
-              password: config.pass,
-              revicers: emails,
-              subject: "测试效果",
-              html: `<p>这是一个测试结果<a href="https://www.baidu.com">去百度</a>吧</p>`,
-              text: "这是文本信息"
-            };
-            this.loading = true;
-            sendEmail(options).then(({ accepted, rejected }) => {
-              accepted.forEach(item => {
-                let data = this.data.find(d => d.account === item);
-                data.status = "成功";
-              });
-              rejected.forEach(item => {
-                let data = this.data.find(d => d.account === item);
-                data.status = "失败";
-              });
-              this.loading = false;
-            });
+      if (this.isStartSend) {
+        return;
+      }
+      const selection = this.data
+        .filter(item => item.status !== "已发送")
+        .map(item => item.account);
+      params = {
+        type: "info",
+        title: "提示",
+        message: `是否对当前${selection.length}项数据进行操作？`,
+        callback: () => {
+          for(let n=0;n<this.accountData.length;n++){
+            const account = this.accountData[n];
           }
-        };
+          for (let i = 0; i < selection.length; i++) {
+            const item = selection[i];
+
+          }
+          const options = {
+            account: "账号",
+            password: "密码",
+            revicers: emails,
+            subject: "测试效果",
+            html: `<p>这是一个测试结果<a href="https://www.baidu.com">去百度</a>吧</p>`,
+            text: "这是文本信息"
+          };
+          this.loading = true;
+        }
+      };
       this.showMesssage(params);
     },
     //  停止发送
-    stopSend() { }
+    stopSend() {
+      this.isStartSend = false;
+      this.loading = false;
+    },
+    //  导入文件
+    loadFile() {
+      const params = {
+        title: "请选择导入文件",
+        filters: [
+          { name: "文本类型", extensions: ["txt"] },
+          { name: "网页", extensions: ["html", "htm"] }
+        ],
+        type: "html",
+        callback: (streams, file) => {
+          this.fileData = streams;
+          this.$store.dispatch("addFilePath", file);
+        }
+      };
+      this.openFile(params);
+      console.log(this.$store.state.account.filePath);
+    }
+  },
+  computed: {
+    filePath() {
+      return this.$store.state.account.filePath;
+    }
   }
 };
 </script>
