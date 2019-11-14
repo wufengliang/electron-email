@@ -1,0 +1,70 @@
+@each $member
+  in (
+    0,
+    2,
+    3,
+    4,
+    5,
+    7,
+    8,
+    10,
+    12,
+    15,
+    16,
+    20,
+    22,
+    24,
+    25,
+    30,
+    36,
+    40,
+    45,
+    50,
+    60,
+    66,
+    70
+  )
+{
+  .margin-right-#{$member} {
+    margin-right: #{$member}px !important;
+  }
+  .margin-left-#{$member} {
+    margin-left: #{$member}px !important;
+  }
+  .margin-bottom-#{$member} {
+    margin-bottom: #{$member}px !important;
+  }
+  .margin-top-#{$member} {
+    margin-top: #{$member}px !important;
+  }
+  .padding-right-#{$member} {
+    padding-right: #{$member}px !important;
+  }
+  .padding-left-#{$member} {
+    padding-left: #{$member}px !important;
+  }
+  .padding-top-#{$member} {
+    padding-top: #{$member}px !important;
+  }
+  .padding-bottom-#{$member} {
+    padding-bottom: #{$member}px !important;
+  }
+  .padding-#{$member} {
+    padding: #{$member}px !important;
+  }
+  .margin-#{$member} {
+    margin: #{$member}px !important;
+  }
+}
+
+@each $val in ("left", "center", "right") {
+  .text-align-#{$val} {
+    text-align: #{$val};
+  }
+}
+
+@each $val in ("left", "top", "right", "bottom") {
+  .border-#{$val} {
+    border-#{$val}: 1px solid #e9e9e9;
+  }
+}

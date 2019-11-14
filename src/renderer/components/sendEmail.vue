@@ -1,292 +1,344 @@
 <template>
   <main class="padding-20">
-    <div class="btn-box">
-      <Button
-        type="primary"
-        size="small"
-        :disabled="accountData && accountData.length > 0"
-        @click="loadEmail"
-      >导入发送账号</Button>
-      <Button
-        type="primary"
-        size="small"
-        :disabled="accountData && accountData.length === 0"
-        class="margin-left-10"
-        @click="lookEmail"
-      >查看发送账号</Button>
-      <Button
-        type="primary"
-        size="small"
-        class="margin-left-10"
-        :disabled="data.length > 0"
-        @click="openDialog"
-      >导入接收账号</Button>
-      <Button
-        type="primary"
-        size="small"
-        class="margin-left-10"
-        :disabled="data.length === 0"
-        @click="reset"
-      >清空数据</Button>
-      <Button
-        type="primary"
-        size="small"
-        class="margin-left-10"
-        :disabled="data.length === 0"
-        @click="startSend"
-      >开始发送</Button>
-      <Button type="primary" size="small" :disabled="data.length === 0" class="margin-left-10">停止发送</Button>
-      <Poptip
-        trigger="hover"
-        title="导入文件地址"
-        placement="left-end"
-        :content="filePath ? filePath : '暂无导入文件'"
+    <Row :gutter="10">
+      <Col span="12">
+      <div class="margin-bottom-5">
+        <Button
+          type="primary"
+          size="small"
+          class="margin-right-2"
+          @click="loadSendAccount"
+        >导入账号</Button>
+        <Button
+          type="default"
+          size="small"
+          class="margin-right-2"
+          @click="sendAccountData=[]"
+        >清空账号</Button>
+        <Button
+          type="primary"
+          size="small"
+          :disabled="sendAccountData.length === 0 || receiverAccountData.length === 0"
+          class="margin-right-2"
+          @click="sendMail"
+        >开始发送</Button>
+        <Button
+          type="primary"
+          size="small"
+          class="margin-right-2"
+          @click="loadFile"
+        >导入附件</Button>
+      </div>
+      <Row
+        type="flex"
+        justify="center"
+        align="middle"
       >
-        <Button type="primary" size="small" class="margin-left-10" @click="loadFile">导入文件</Button>
-      </Poptip>
-    </div>
-    <div class="table-box margin-top-10">
-      <Table border :loading="loading" :columns="columns" :data="data"></Table>
-    </div>
-    <div class="status">
-      <div class="status-item">
-        <b>发送账号:</b>
-        <span>44823912@qq.com</span>
+        <Table
+          width="'100%'"
+          height="400"
+          border
+          :loading="loading"
+          :no-data-text="loading ? '正在发送':'请先导入发送账号'"
+          :columns="sendColumns"
+          :data="sendAccountData"
+        ></Table>
+      </Row>
+      </Col>
+      <Col span="12">
+      <div class="margin-bottom-5">
+        <Button
+          type="primary"
+          size="small"
+          class="margin-right-2"
+          @click="loadReceiverAccount"
+        >导入账号</Button>
+        <Button
+          type="default"
+          size="small"
+          @click="receiverAccountData=[]"
+        >清空账号</Button>
       </div>
-      <div class="status-item">
-        <b>接收账号:</b>
-        <span>44823912@qq.com</span>
+      <Row
+        type="flex"
+        justify="center"
+        align="middle"
+      >
+        <Table
+          width="'100%'"
+          height="400"
+          border
+          :loading="loading"
+          :no-data-text="loading?'正在发送':'请先导入接收账号'"
+          :columns="receiverColumns"
+          :data="receiverAccountData"
+        ></Table>
+      </Row>
+      </Col>
+    </Row>
+    <ul class="status-box">
+      <li>
+        发送账号：{{nowSendAccount}}
+      </li>
+      <li>
+        接收账号：{{nowReceiverAccount}}
+      </li>
+      <li>
+        发送附件：{{this.$store.state.account.filePath}}
+      </li>
+      <li>
+        状态：{{nowStatus}}
+      </li>
+    </ul>
+    <Modal
+      v-model="isShow"
+      title="请输入邮件主题"
+      width="300"
+    >
+      <Input
+        v-model="subject"
+        placeholder="请输入邮件主题..."
+        style="width: 260px"
+      ></Input>
+      <div slot="footer">
+        <Button
+          type="primary"
+          size="large"
+          @click="setSubject"
+        >确定</Button>
       </div>
-      <div class="status-item no-radius">
-        <b>状态:</b>
-        <span>44823912@qq.com</span>
-      </div>
-    </div>
+    </Modal>
   </main>
 </template>
 
 <script>
 import fs from "fs";
-import nodemailer from "nodemailer";
 import sendEmail from "../utils/send-emal";
 import config from "../config";
-import { getData, setData } from "../utils/set-get.data";
 export default {
   name: "send-email",
   data() {
     return {
-      loading: false, //  表格loading效果图
-      accountData: [], //  table表格数据源
-      columns: [
+      sendColumns: [
         {
-          title: "账号",
-          key: "account"
+          title: '账号',
+          width: 150,
+          key: 'account',
         },
         {
-          title: "发送状态",
-          key: "status"
+          title: '密码',
+          key: 'password',
+          render: (h) => {
+            return h('span', '******');
+          }
+        },
+        {
+          title: '操作',
+          align: 'center',
+          render: (h, params) => {
+            return h('Button', {
+              props: {
+                type: 'primary',
+                size: 'small'
+              },
+              on: {
+                click: () => {
+                  this.sendAccountData.splice(params.index, 1);
+                }
+              }
+            }, '删除')
+          }
         }
-      ],
-      data: [], //  接收账号数据
-      fileData: null, // 导入发送的文件
-      isStartSend: false
+      ],  //  发送账号列名
+      receiverColumns: [
+        { title: '账号', key: 'account', width: 150, },
+        {
+          title: '状态',
+          key: 'status',
+          width: 80,
+          render: (h, params) => {            console.log(params)
+            return h(`${params.row.status === '成功' ? 'Icon' : null}`, {
+              props: {
+                type: `${params.row.status === '成功' ? 'ios-checkmark' : 'ios-close'}`,
+                color: `${params.row.status === '成功' ? '#19be6b' : '#ccc'}`
+              },
+              style: {
+                fontSize: '20px',
+                color: '#fff',
+                background: `${params.row.status === '成功' ? '#19be6b' : '#ccc'}`,
+                borderRadius: '50%'
+              }
+            })
+          }
+        },
+        {
+          title: '操作',
+          align: 'center',
+          render: (h, params) => {
+            return h('Button', {
+              props: {
+                type: 'primary',
+                size: 'small'
+              },
+              on: {
+                click: () => {
+                  this.receiverAccountData.splice(params.index, 1);
+                }
+              }
+            }, '删除')
+          }
+        }
+      ],  //  接收账号列名
+      sendAccountData: [],  //  发送账号数据
+      receiverAccountData: [],  //  接收账号数据
+      nowSendAccount: null,  //  正在发送账号
+      nowReceiverAccount: null,  //  正在接收账号
+      nowStatus: null,  //  发送状态
+      loading: false,  //  loading状态
+      subject: null,  //  发送邮件主题
+      isShow: false,
     };
-  },
-  created() {
-    this.accountData = getData("accountData") || [];
   },
   methods: {
     //  导入发送账号
-    loadEmail() {
-      const params = {
-        title: "导入发送邮件账号",
-        callback: data => {
-          const array =
-            data.length &&
-            data.map(item => {
-              const data = item.split("-");
-              return { account: data[0], password: data[1] };
-            });
-          this.accountData = array;
-          setData("accountData", array);
-        }
-      };
-      this.openFile(params);
-    },
-    //  查看发送账号
-    lookEmail() {
-      const window = this.$electron.remote.BrowserWindow,
-        winURL = `${location.origin}/#/look-email`,
-        winHandle = new window({
-          width: 500,
-          height: 300,
-          useContentSize: false,
-          resizable: false,
-          autoHideMenuBar: true,
-          maximizable: false
-        });
-      winHandle.webContents.send("accountData", this.accountData);
-      winHandle.loadURL(winURL);
-      winHandle.on("closed", () => {
-        this.accountData = getData("accountData") || [];
-      });
-    },
-    //  导入接收邮箱
-    openDialog() {
-      this.$electron.remote.dialog.showOpenDialog(
-        {
-          title: "导入接收邮箱账号",
-          properties: ["openFile", "showHiddenFiles"],
-          filters: [{ name: "文本类型", extensions: ["txt"] }]
-        },
-        filePaths => {
-          if (filePaths) {
-            fs.readFile(filePaths[0], "utf-8", (err, data) => {
-              if (err) throw err;
-              this.data = [];
-              data.split("\n").forEach(item => {
-                this.data.push({
-                  account: item,
-                  status: "未开始"
-                });
-              });
-            });
+    loadSendAccount() {
+      const fn = () => {
+        this.showOpenDialog({}).then(
+          array => {
+            this.sendAccountData = [];
+            array.forEach(val => {
+              const arr = val.split('-');
+              this.sendAccountData.push({
+                account: arr[0],
+                password: arr[1]
+              })
+            })
           }
-        }
-      );
-    },
-    //  清空
-    reset() {
-      const params = {
-        message: "是否清空数据？",
-        callback: () => {
-          this.data = [];
-        }
-      };
-      this.showMesssage(params);
-    },
-    //  公共提示框
-    showMesssage({ type = "info", title = "提示", message, callback }) {
-      const params = {
-        type,
-        title,
-        message,
-        buttons: ["是", "否"]
-      };
-      this.$electron.remote.dialog[
-        `${type === "info" ? "showMessageBox" : "showErrorBox"}`
-      ](params, index => {
-        index === 0 && callback && callback();
-      });
-    },
-    //  公共打开文件提示框
-    openFile({
-      title = "提示",
-      properties = ["openFile", "showHiddenFiles"],
-      filters = [{ name: "文本类型", extensions: ["txt"] }],
-      type = "txt",
-      callback
-    }) {
-      const dialog = this.$electron.remote.dialog;
-      dialog.showOpenDialog({ title, properties, filters }, filePaths => {
-        if (filePaths) {
-          fs.readFile(filePaths[0], "utf8", (err, data) => {
-            if (err) {
-              throw err;
-            }
-            // eslint-disable-next-line no-unused-expressions
-            callback &&
-              (type === "txt"
-                ? callback(data.split(/\n/), filePaths[0])
-                : callback(data, filePaths[0]));
-          });
-        }
-      });
-    },
-    //  开始发送
-    startSend() {
-      if (this.isStartSend) {
+        )
+      }
+      if (this.sendAccountData.length > 0) {
+        this.$Modal.confirm({
+          title: '提示',
+          content: `是否覆盖当前发送账号？`,
+          onOk: () => {
+            fn();
+          }
+        });
         return;
       }
-      const selection = this.data
-        .filter(item => item.status !== "已发送")
-        .map(item => item.account);
-      params = {
-        type: "info",
-        title: "提示",
-        message: `是否对当前${selection.length}项数据进行操作？`,
-        callback: () => {
-          for(let n=0;n<this.accountData.length;n++){
-            const account = this.accountData[n];
-          }
-          for (let i = 0; i < selection.length; i++) {
-            const item = selection[i];
 
-          }
-          const options = {
-            account: "账号",
-            password: "密码",
-            revicers: emails,
-            subject: "测试效果",
-            html: `<p>这是一个测试结果<a href="https://www.baidu.com">去百度</a>吧</p>`,
-            text: "这是文本信息"
-          };
-          this.loading = true;
+      fn();
+    },
+    //  导入接收账号
+    loadReceiverAccount() {
+      this.showOpenDialog({}).then(
+        array => {
+          this.receiverAccountData = [];
+          array.forEach(val => {
+            this.receiverAccountData.push({
+              account: val,
+              status: '未开始'
+            })
+          })
         }
-      };
-      this.showMesssage(params);
+      )
     },
-    //  停止发送
-    stopSend() {
-      this.isStartSend = false;
-      this.loading = false;
-    },
-    //  导入文件
+    //  导入附件
     loadFile() {
-      const params = {
-        title: "请选择导入文件",
-        filters: [
-          { name: "文本类型", extensions: ["txt"] },
-          { name: "网页", extensions: ["html", "htm"] }
-        ],
-        type: "html",
-        callback: (streams, file) => {
-          this.fileData = streams;
-          this.$store.dispatch("addFilePath", file);
+      this.showOpenDialog({ title: '导入附件', filters: [{ name: '网页文件', extensions: ['htm', 'html'] }], type: 'file' }).then(
+        file => {
+          this.$store.dispatch('addFilePath', file);
         }
-      };
-      this.openFile(params);
-      console.log(this.$store.state.account.filePath);
-    }
-  },
-  computed: {
-    filePath() {
-      return this.$store.state.account.filePath;
+      )
+    },
+    sendMail() {
+      this.subject = null;
+      this.isShow = true;
+    },
+    //  开始发送
+    setSubject() {
+      this.isShow = false;
+      this.$Modal.confirm({
+        title: '提示',
+        content: '是否开始发送？',
+        onOk: () => {
+          const files = this.$store.state.account.filePath;
+          fs.readFile(files, 'utf8', (err, html) => {
+            if (err) {
+              this.$Modal.error({
+                title: '提示',
+                content: err.message
+              })
+              return;
+            }
+            this.loading = true;
+            this.sendAccountData.forEach(({ account, password }) => {
+              this.nowSendAccount = account;
+              let num = 0;
+              for (let index = 0; index < this.receiverAccountData.length; index++) {
+                const element = this.receiverAccountData[index];
+                this.nowReceiverAccount = element.account;
+                this.nowStatus = '正在发送...';
+                //  每个账号只允许发送300封邮件 超过300个账号就进行下一个账号发送
+                if (num > 300) {
+                  return false;
+                }
+                sendEmail({ account, password, revicers: element.account, subject: this.subject, html }).then(
+                  result => {
+                    this.loading = false;
+                    this.nowStatus = '接收成功';
+                    element.status = '成功';
+                  }
+                );
+              }
+            })
+          })
+        }
+      })
+    },
+    //  打开文件
+    showOpenDialog({ title = '导入接收邮箱账号', properties = ["openFile", "showHiddenFiles"], filters = [{ name: "文本类型", extensions: ["txt"] }], type = 'text' }) {
+      const dialog = this.$electron.remote.dialog.showOpenDialog;
+      return new Promise((resolve, reject) => {
+        dialog({ title, properties, filters }, files => {
+          if (files) {
+            if (type === 'text' || !type) {
+              fs.readFile(files[0], 'utf8', (err, data) => {
+                if (err) {
+                  reject(err);
+                }
+                resolve(data.replace(/\n/g, '|').split('|'));
+              })
+            } else if (type === 'file') {
+              resolve(files[0]);
+            }
+          }
+        })
+      })
     }
   }
 };
 </script>
 
-<style lang="css">
-.status {
+<style lang="scss">
+.status-box {
+  display: flex;
+  align-content: center;
+  justify-content: center;
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
   height: 30px;
-  background-color: #d6cccc;
-  display: flex;
-  border: 1px solid #d8d8d8;
-}
-.status-item {
-  flex: 1;
-  height: 30px;
   line-height: 30px;
-  padding-left: 10px;
-  color: #333;
-  border-right: 1px solid #222;
-}
-.no-radius {
-  border-width: 0;
+  background: #dcb7b7;
+  color: #fff;
+  li {
+    flex-grow: 1;
+    border-top: 1px solid #a28888;
+    border-left: 1px solid #8e7777;
+    padding-left: 8px;
+    margin-left: -1px;
+  }
 }
 </style>

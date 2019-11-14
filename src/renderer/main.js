@@ -2,7 +2,7 @@ import Vue from 'vue';
 import axios from 'axios';
 import iView from 'iview';
 import 'iview/dist/styles/iview.css';
-import './styles/index.css';
+import './styles/index.scss';
 
 import App from './App';
 import router from './router';

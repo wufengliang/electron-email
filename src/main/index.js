@@ -1,4 +1,5 @@
-import { app, BrowserWindow } from 'electron' // eslint-disable-line
+import { app, BrowserWindow, ipcMain, dialog } from 'electron' // eslint-disable-line
+import TYPES from '../renderer/service/types';
 
 /**
  * Set `__static` path to static files in production
@@ -18,8 +19,8 @@ function createWindow() {
    * Initial window options
    */
   mainWindow = new BrowserWindow({
-    width: 650,
-    height: 500,
+    width: 850,
+    height: 520,
     useContentSize: false,
     resizable: false,
     autoHideMenuBar: true,
@@ -30,6 +31,12 @@ function createWindow() {
 
   mainWindow.on('closed', () => {
     mainWindow = null;
+  });
+
+  TYPES.forEach((type) => {
+    ipcMain.on(type, (event, args) => {
+      mainWindow.webContents.send(type, args);
+    });
   });
 }
 
