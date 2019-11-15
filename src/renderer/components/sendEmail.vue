@@ -114,7 +114,6 @@
 <script>
 import fs from "fs";
 import sendEmail from "../utils/send-emal";
-import config from "../config";
 export default {
   name: "send-email",
   data() {
@@ -284,7 +283,7 @@ export default {
                   return false;
                 }
                 sendEmail({ account, password, revicers: element.account, subject: this.subject, html }).then(
-                  result => {
+                  () => {
                     this.loading = false;
                     this.nowStatus = '接收成功';
                     element.status = '成功';
