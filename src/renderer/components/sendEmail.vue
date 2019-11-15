@@ -156,7 +156,7 @@ export default {
           title: '状态',
           key: 'status',
           width: 80,
-          render: (h, params) => {            console.log(params)
+          render: (h, params) => {
             return h(`${params.row.status === '成功' ? 'Icon' : null}`, {
               props: {
                 type: `${params.row.status === '成功' ? 'ios-checkmark' : 'ios-close'}`,
