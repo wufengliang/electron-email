@@ -19,12 +19,15 @@ function createWindow() {
    * Initial window options
    */
   mainWindow = new BrowserWindow({
-    width: 850,
+    minWidth: 850,
     height: 520,
     useContentSize: false,
-    resizable: false,
+    resizable: true,
     autoHideMenuBar: true,
-    maximizable: false,
+    maximizable: true,
+    webPreferences: {
+      nodeIntegration: true,
+    }
   });
 
   mainWindow.loadURL(winURL);
