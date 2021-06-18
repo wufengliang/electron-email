@@ -1,25 +1,24 @@
-# electron email —— 关于 electron 邮件群发器
-
-> electron email
-
-#### Build Setup
-
-```bash
-# install dependencies
-npm install
-
-# serve with hot reload at localhost:9080
-npm run dev
-
-# build electron application for production
-npm run build
+### Electron - 关于邮件相关
 
 
-# lint all JS/Vue component files in `src/`
-npm run lint
+#### 技术栈
 
-```
+-   1.Electron-Vue
+-   2.Node.js
+-   3.nodemailer
+-   4.[iViewUI](http://v3.iviewui.com)
 
----
 
-This project was generated with [electron-vue](https://github.com/SimulatedGREG/electron-vue) using [vue-cli](https://github.com/vuejs/vue-cli). Documentation about the original structure can be found [here](https://simulatedgreg.gitbooks.io/electron-vue/content/index.html).
+#### 开发前考虑
+
+-   1.本着单页面应用开发
+-   2.是否会出现多窗台使用
+-   3.邮件相关技术开发是否会有登录邮箱以及单、群发邮件状态
+
+#### 关于打包
+
+-   1.使用`Github Action`操作流自动打包代码，自动生成软件，详细参考文档：[点我前往](https://wangdaodao.com/20201015/gitHub-action-electron.html)
+
+#### 迭代开发
+
+-   1.考虑`热更新问题`
