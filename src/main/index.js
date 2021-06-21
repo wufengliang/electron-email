@@ -20,11 +20,11 @@ function createWindow() {
    */
   mainWindow = new BrowserWindow({
     minWidth: 850,
-    height: 520,
+    height: 540,
     useContentSize: false,
     resizable: true,
     autoHideMenuBar: true,
-    maximizable: true,
+    maximizable: false,
     webPreferences: {
       nodeIntegration: true,
     }

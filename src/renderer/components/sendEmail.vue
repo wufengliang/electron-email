@@ -2,122 +2,141 @@
   <main class="padding-20">
     <Row :gutter="10">
       <Col span="12">
-      <div class="margin-bottom-5">
-        <Button
-          type="primary"
-          size="small"
-          class="margin-right-2"
-          @click="loadSendAccount"
-        >导入账号</Button>
-        <Button
-          type="default"
-          size="small"
-          class="margin-right-2"
-          @click="sendAccountData=[]"
-        >清空账号</Button>
-        <Button
-          type="primary"
-          size="small"
-          :disabled="sendAccountData.length === 0 || receiverAccountData.length === 0"
-          class="margin-right-2"
-          @click="sendMail"
-        >开始发送</Button>
-        <Button
-          type="primary"
-          size="small"
-          class="margin-right-2"
-          @click="loadFile"
-        >导入附件</Button>
-      </div>
-      <Row
-        type="flex"
-        justify="center"
-        align="middle"
-      >
-        <Table
-          width="'100%'"
-          height="400"
-          border
-          :loading="loading"
-          :no-data-text="loading ? '正在发送':'请先导入发送账号'"
-          :columns="sendColumns"
-          :data="sendAccountData"
-        ></Table>
-      </Row>
+        <div class="margin-bottom-5">
+          <Button
+            type="primary"
+            size="small"
+            class="margin-right-2"
+            @click="importAccount('send')"
+            >导入账号</Button
+          >
+          <Button
+            type="default"
+            size="small"
+            class="margin-right-2"
+            @click="sendAccountData = []"
+            >清空账号</Button
+          >
+          <Button
+            type="primary"
+            size="small"
+            class="margin-right-2"
+            @click="sendMail"
+            >开始发送</Button
+          >
+          <Button
+            type="primary"
+            size="small"
+            class="margin-right-2"
+            @click="chooseData.isShow = true"
+            >导入附件</Button
+          >
+        </div>
+        <Row type="flex" justify="center" align="middle">
+          <Table
+            width="'100%'"
+            height="400"
+            border
+            :loading="loading"
+            :no-data-text="loading ? '正在发送' : '请先导入发送账号'"
+            :columns="sendColumns"
+            :data="sendAccountData"
+          ></Table>
+        </Row>
       </Col>
       <Col span="12">
-      <div class="margin-bottom-5">
-        <Button
-          type="primary"
-          size="small"
-          class="margin-right-2"
-          @click="loadReceiverAccount"
-        >导入账号</Button>
-        <Button
-          type="default"
-          size="small"
-          @click="receiverAccountData=[]"
-        >清空账号</Button>
-      </div>
-      <Row
-        type="flex"
-        justify="center"
-        align="middle"
-      >
-        <Table
-          width="'100%'"
-          height="400"
-          border
-          :loading="loading"
-          :no-data-text="loading?'正在发送':'请先导入接收账号'"
-          :columns="receiverColumns"
-          :data="receiverAccountData"
-        ></Table>
-      </Row>
+        <div class="margin-bottom-5">
+          <Button
+            type="primary"
+            size="small"
+            class="margin-right-2"
+            :disabled="randomAccount"
+            @click="importAccount('receive')"
+            >导入账号</Button
+          >
+          <Button type="default" size="small" @click="receiverAccountData = []"
+            >清空账号</Button
+          >
+          <Checkbox v-model="randomAccount">是否随机账号</Checkbox>
+        </div>
+        <Row type="flex" justify="center" align="middle">
+          <Table
+            width="'100%'"
+            height="400"
+            border
+            :loading="loading"
+            :no-data-text="loading ? '正在发送' : '请先导入接收账号'"
+            :columns="receiverColumns"
+            :data="receiverAccountData"
+          ></Table>
+        </Row>
       </Col>
     </Row>
     <ul class="status-box">
       <li>
-        发送账号：{{nowSendAccount}}
+        发送账号：<span>{{ account.sendAccount }}</span>
       </li>
       <li>
-        接收账号：{{nowReceiverAccount}}
+        接收账号：
+        <span>
+          <Tooltip max-width="100" v-if="account.revicers && account.revicers.length && account.revicers.length>0" :content="account.revicers.join(' | ')" placement="top">
+            <span>查看接收账号</span>
+          </Tooltip>
+        </span>
       </li>
       <li>
-        发送附件：{{this.$store.state.account.filePath}}
+        发送附件：<span>{{ chooseData.file }}</span>
       </li>
       <li>
-        状态：{{nowStatus}}
+        状态：<span>{{ account.status }}</span>
       </li>
     </ul>
     <Modal
-      v-model="isShow"
+      v-model="subjectData.isShow"
       title="请输入邮件主题"
       width="300"
+      @on-ok="setSubject"
+      @on-cancel="subjectData.value = null"
     >
       <Input
-        v-model="subject"
         placeholder="请输入邮件主题..."
         style="width: 260px"
-      ></Input>
-      <div slot="footer">
-        <Button
-          type="primary"
-          size="large"
-          @click="setSubject"
-        >确定</Button>
-      </div>
+        v-model="subjectData.value"
+      />
+    </Modal>
+    <Modal
+      v-model="chooseData.isShow"
+      title="请输入附件模式"
+      width="300"
+      @on-ok="chooseFileType"
+    >
+      <Select v-model="chooseData.value">
+        <Option value="txt" key="text">文本</Option>
+        <Option value="html" key="html">超文本</Option>
+      </Select>
     </Modal>
   </main>
 </template>
 
 <script>
-import fs from "fs";
-import sendEmail from "../utils/send-emal";
+import fs from 'fs';
+import sendEmail from '../utils/send-emal';
+import { dialog } from '../utils/remote';
 export default {
-  name: "send-email",
+  name: 'send-email',
   data() {
     return {
+      loading: false,
+      randomAccount:false,
+      subjectData:{
+        isShow:false,
+        value:'', //  主题
+      },
+      chooseData:{
+        isShow:false,
+        value:null,  // 类型
+        file:null //  内容
+      },
       sendColumns: [
         {
           title: '账号',
@@ -127,195 +146,176 @@ export default {
         {
           title: '密码',
           key: 'password',
-          render: (h) => {
-            return h('span', '******');
-          }
+          render: h => h('span', '******'),
         },
         {
           title: '操作',
           align: 'center',
-          render: (h, params) => {
-            return h('Button', {
-              props: {
-                type: 'primary',
-                size: 'small'
+          render: (h, params) => h(
+              'Button',
+              {
+                props: {
+                  type: 'primary',
+                  size: 'small',
+                },
+                on: {
+                  click: () => {
+                    this.sendAccountData.splice(params.index, 1);
+                  },
+                },
               },
-              on: {
-                click: () => {
-                  this.sendAccountData.splice(params.index, 1);
-                }
-              }
-            }, '删除')
-          }
-        }
-      ],  //  发送账号列名
+              '删除',
+            ),
+        },
+      ], //  发送账号列名
       receiverColumns: [
-        { title: '账号', key: 'account', width: 150, },
+        { title: '账号', key: 'account', width: 150 },
         {
           title: '状态',
           key: 'status',
           width: 80,
-          render: (h, params) => {
-            return h(`${params.row.status === '成功' ? 'Icon' : null}`, {
+          render: (h, params) => h(`${params.row.status === '成功' ? 'Icon' : 'span'}`, {
               props: {
                 type: `${params.row.status === '成功' ? 'ios-checkmark' : 'ios-close'}`,
-                color: `${params.row.status === '成功' ? '#19be6b' : '#ccc'}`
+                color: `${params.row.status === '成功' ? '#19be6b' : '#ccc'}`,
               },
               style: {
                 fontSize: '20px',
                 color: '#fff',
                 background: `${params.row.status === '成功' ? '#19be6b' : '#ccc'}`,
-                borderRadius: '50%'
-              }
-            })
-          }
+                borderRadius: '50%',
+              },
+            }),
         },
         {
           title: '操作',
           align: 'center',
-          render: (h, params) => {
-            return h('Button', {
-              props: {
-                type: 'primary',
-                size: 'small'
+          render: (h, params) => h(
+              'Button',
+              {
+                props: {
+                  type: 'primary',
+                  size: 'small',
+                },
+                on: {
+                  click: () => {
+                    this.receiverAccountData.splice(params.index, 1);
+                  },
+                },
               },
-              on: {
-                click: () => {
-                  this.receiverAccountData.splice(params.index, 1);
-                }
-              }
-            }, '删除')
-          }
-        }
-      ],  //  接收账号列名
-      sendAccountData: [],  //  发送账号数据
-      receiverAccountData: [],  //  接收账号数据
-      nowSendAccount: null,  //  正在发送账号
-      nowReceiverAccount: null,  //  正在接收账号
-      nowStatus: null,  //  发送状态
-      loading: false,  //  loading状态
-      subject: null,  //  发送邮件主题
-      isShow: false,
+              '删除',
+            ),
+        },
+      ], //  接收账号列名
+      sendAccountData: [], //  发送账号数据
+      receiverAccountData: [], //  接收账号数据
     };
+  },
+  computed:{
+    account(){
+      return this.$store.state.account;
+    }
   },
   methods: {
     //  导入发送账号
-    loadSendAccount() {
-      const fn = () => {
-        this.showOpenDialog({}).then(
-          array => {
-            this.sendAccountData = [];
-            array.forEach(val => {
-              const arr = val.split('-');
-              this.sendAccountData.push({
-                account: arr[0],
-                password: arr[1]
-              })
+    importAccount(type) {
+      switch (type) {
+        case 'send':
+          this.loadAccount((content)=>{
+            this.sendAccountData = content.split('\n').map(item=>{
+              const [account,password] = item.split('|');
+              return {
+                account,
+                password
+              }
             })
-          }
-        )
+          });
+          break;
+        case 'receive':
+          this.loadAccount((content)=>{
+            this.receiverAccountData = content.split('\n').map(item=>{
+              return {
+                account:item
+              }
+            });
+          })
+          break;
+        default:
+          break;
       }
-      if (this.sendAccountData.length > 0) {
-        this.$Modal.confirm({
-          title: '提示',
-          content: `是否覆盖当前发送账号？`,
-          onOk: () => {
-            fn();
-          }
-        });
-        return;
+    },
+    //  导入账号
+    loadAccount(callback) {
+      const values = dialog.showOpenDialog({ properties: ['openFile'], message: '请选择文件' });
+      if(values){
+        const content = fs.readFileSync(values[0],{encoding:'utf8'})
+        callback && callback(content);
+      }
+    },
+    //  选择附件
+    chooseFileType(){
+      const {value} = this.chooseData;
+      const filePath = dialog.showOpenDialog({properties:['openFile'],filters:[{name:value === 'text' ? '文本':'超文本',extensions:[`${value}`]}]})
+      if(filePath && filePath.length){
+        this.chooseData.file = filePath[0];
+      }
+    },
+    async sendMail() {
+      if(this.sendAccountData.length === 0){
+        return this.$Message.error('请导入发送账号');
       }
 
-      fn();
-    },
-    //  导入接收账号
-    loadReceiverAccount() {
-      this.showOpenDialog({}).then(
-        array => {
-          this.receiverAccountData = [];
-          array.forEach(val => {
-            this.receiverAccountData.push({
-              account: val,
-              status: '未开始'
-            })
-          })
+      if(!this.randomAccount && this.receiverAccountData.length === 0){
+        return this.$Message.error('请导入接收账号');
+      }
+
+      if(!this.subjectData.value){
+        setTimeout(()=>{
+          this.subjectData.isShow = true;
+        },1500)
+        return this.$Message.info('请输入邮件主题');
+      }
+
+      if(!this.chooseData.file){
+        return this.$Message.error('请选择上传的附件');
+      }
+
+      
+      if(this.randomAccount){
+        this.receiverAccountData = []
+      }
+      this.sendAccountData.forEach(({account,password})=>{
+        const totalAccounts = [...this.receiverAccountData.map(item=>item.account)];
+        const {value:subject} = this.subjectData;
+        const {value,file} = this.chooseData;
+        const config = {
+          account,
+          password,
+          revicers:this.randomAccount ?
+          Array.from({length:100},()=>parseInt(Math.random()* 1000000000))
+          :totalAccounts.splice(0,100),
+          subject,
+          [value==='txt'?'text':'html']:fs.readFileSync(file,{encoding:'utf8'})
         }
-      )
-    },
-    //  导入附件
-    loadFile() {
-      this.showOpenDialog({ title: '导入附件', filters: [{ name: '网页文件', extensions: ['htm', 'html'] }], type: 'file' }).then(
-        file => {
-          this.$store.dispatch('addFilePath', file);
+
+        if(!config.revicers.length){
+          throw Error('当前接收邮件账号为空')
         }
-      )
-    },
-    sendMail() {
-      this.subject = null;
-      this.isShow = true;
+        
+        this.$store.commit('account/SET_SEND_ACOUNT',config.account);
+        this.$store.commit('account/SET_REVICERS_COUNT',config.revicers);
+        this.$store.commit('account/SET_SEND_STATUS','正在发送');
+        sendEmail(config).then(value=>{
+          console.log(value);
+          this.$store.commit('account/SET_SEND_STATUS','发送成功');
+        })
+      })
     },
     //  开始发送
     setSubject() {
-      this.isShow = false;
-      this.$Modal.confirm({
-        title: '提示',
-        content: '是否开始发送？',
-        onOk: () => {
-          const files = this.$store.state.account.filePath;
-          fs.readFile(files, 'utf8', (err, html) => {
-            if (err) {
-              this.$Modal.error({
-                title: '提示',
-                content: err.message
-              })
-              return;
-            }
-            this.loading = true;
-            this.sendAccountData.forEach(({ account, password }) => {
-              this.nowSendAccount = account;
-              let num = 0;
-              for (let index = 0; index < this.receiverAccountData.length; index++) {
-                const element = this.receiverAccountData[index];
-                this.nowReceiverAccount = element.account;
-                this.nowStatus = '正在发送...';
-                //  每个账号只允许发送300封邮件 超过300个账号就进行下一个账号发送
-                if (num > 300) {
-                  return false;
-                }
-                sendEmail({ account, password, revicers: element.account, subject: this.subject, html }).then(
-                  () => {
-                    this.loading = false;
-                    this.nowStatus = '接收成功';
-                    element.status = '成功';
-                  }
-                );
-              }
-            })
-          })
-        }
-      })
-    },
-    //  打开文件
-    showOpenDialog({ title = '导入接收邮箱账号', properties = ["openFile", "showHiddenFiles"], filters = [{ name: "文本类型", extensions: ["txt"] }], type = 'text' }) {
-      const dialog = this.$electron.remote.dialog.showOpenDialog;
-      return new Promise((resolve, reject) => {
-        dialog({ title, properties, filters }, files => {
-          if (files) {
-            if (type === 'text' || !type) {
-              fs.readFile(files[0], 'utf8', (err, data) => {
-                if (err) {
-                  reject(err);
-                }
-                resolve(data.replace(/\n/g, '|').split('|'));
-              })
-            } else if (type === 'file') {
-              resolve(files[0]);
-            }
-          }
-        })
-      })
+      this.sendMail();
     }
-  }
+  },
 };
 </script>
 

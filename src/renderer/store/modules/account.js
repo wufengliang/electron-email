@@ -1,35 +1,28 @@
 const state = {
-  accountData: [],
-  filePath: null,
+  sendAccount: null, //  发送账号,
+  revicers: [], //  接收账号
+  sendStatus: '',  //  发送状态
 };
 
 const mutations = {
-  ADD_ACCOUNT_DATA: (state, data) => {
-    state.accountData = data;
+  SET_SEND_ACOUNT: (state, account) => {
+    state.sendAccount = account;
   },
-  DELETE_ACCOUNT_DATA: (state, single) => {
-    const index = state.accountData.findIndex(item => item.account === single);
-    state.accountData.splice(index, 1);
+  SET_REVICERS_COUNT: (state, revicers) => {
+    state.revicers = revicers;
   },
-  ADD_FILE_PATH: (state, filePath) => {
-    state.filePath = filePath;
-  },
+  SET_SEND_STATUS: (state, status) => {
+    state.sendStatus = status;
+  }
 };
 
 const actions = {
-  addAccountData({ commit }, data) {
-    commit('ADD_ACCOUNT_DATA', data);
-  },
-  deleteAccountData({ commit }, data) {
-    commit('DELETE_ACCOUNT_DATA', data);
-  },
-  addFilePath({ commit }, data) {
-    commit('ADD_FILE_PATH', data);
-  },
+
 };
 
 export default {
   state,
   mutations,
   actions,
+  namespaced: true,
 };
