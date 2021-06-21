@@ -77,7 +77,12 @@
         发送账号：<span>{{ account.sendAccount }}</span>
       </li>
       <li>
-        接收账号：<span>{{ account.revicers }}</span>
+        接收账号：
+        <span>
+          <Tooltip max-width="100" v-if="account.revicers && account.revicers.length && account.revicers.length>0" :content="account.revicers.join(' | ')" placement="top">
+            <span>查看接收账号</span>
+          </Tooltip>
+        </span>
       </li>
       <li>
         发送附件：<span>{{ chooseData.file }}</span>
@@ -268,7 +273,11 @@ export default {
         setTimeout(()=>{
           this.subjectData.isShow = true;
         },1500)
-        return this.$Message.error('请输入邮件主题');
+        return this.$Message.info('请输入邮件主题');
+      }
+
+      if(!this.chooseData.file){
+        return this.$Message.error('请选择上传的附件');
       }
 
       
@@ -293,12 +302,12 @@ export default {
           throw Error('当前接收邮件账号为空')
         }
         
-        this.$store.commit('account/ADD_ACCOUNT_DATA',config.account);
+        this.$store.commit('account/SET_SEND_ACOUNT',config.account);
         this.$store.commit('account/SET_REVICERS_COUNT',config.revicers);
-        this.$store.commit('account/ADD_ACCOUNT_DATA','正在发送');
+        this.$store.commit('account/SET_SEND_STATUS','正在发送');
         sendEmail(config).then(value=>{
           console.log(value);
-          this.$store.commit('account/ADD_ACCOUNT_DATA','发送成功');
+          this.$store.commit('account/SET_SEND_STATUS','发送成功');
         })
       })
     },

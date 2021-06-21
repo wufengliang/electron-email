@@ -5,7 +5,7 @@ const state = {
 };
 
 const mutations = {
-  SET_SEND_COUNT: (state, account) => {
+  SET_SEND_ACOUNT: (state, account) => {
     state.sendAccount = account;
   },
   SET_REVICERS_COUNT: (state, revicers) => {
@@ -24,4 +24,5 @@ export default {
   state,
   mutations,
   actions,
+  namespaced: true,
 };
